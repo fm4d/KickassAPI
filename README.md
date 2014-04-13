@@ -7,8 +7,8 @@ Usage
 =====
 
 There are two objects - Search for searching and Latest for kickass.to/new/  
-Torrents are parsed into namedtuples called Torrent, there is function lookup()
-for simple print of name, author, size and age.
+Torrents are parsed into namedtuples called Torrent and there is function lookup()  
+to simply print name, author, size and age of torrent.
 
 Printing first 25 torrents of "Game of thrones"
 ```python
