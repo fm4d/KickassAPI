@@ -40,10 +40,11 @@ all() returns all torrents starting from current page,for example:
 ```python
 Search("Game of thrones").page(5).all()
 ```
-return all torrents starting on page 5.
+return all torrents starting on page 5.  
 You can pass adition parameters to Search:
 ```python
 Search("Game of thrones",category="games",field="size",order="desc")
 ```
 
+Dont use category() or order() after pages(), use it before it!  
 Object Latest works exactly as Search, but you cant use categories.
