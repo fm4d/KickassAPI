@@ -4,60 +4,67 @@ This is unofficial Python API for kickass.to
 
 Usage
 =====
-There are two objects - ``Search`` for searching and Latest for ``kickass.to/new/``
-Torrents are parsed into `namedtuples` called Torrent and there is function ``lookup()``
-to simply print name, author, size and age of torrent.
+There are two objects - ``Search`` for searching and Latest for ``kickass.to/new/``Torrents are parsed into `namedtuples` called Torrent and there is a function ``lookup()``if you want to simply print name, author, size and age of namedtuple Torrent.
 
-Print first 25 torrents matching "Game of thrones":
+Search for first page of "Game of thrones" and print it with ``lookup()``:
 
 ```python
 for t in Search("Game of thrones"):
     lookup(t)
 ```
 
-Print more (25-50) results matching of "Game of thrones":
+``next()`` and ``previous()`` allows traversing throught result pages:
 
 ```python
 for t in Search("Game of thrones").next():
     lookup(t)
 ```
-
-Use ``previous()`` to get previous page and ``page()`` to jump to any page.
-
-Print 1-100 of "Game of thrones":
-
-```python
-for t in Search("Game of thrones").pages(1,4):
-    lookup(t)
-```
     
-You can choose category using ``category("category")`` and order using 
-``order("field", "order")``, for example:
+You can choose category using ``category("category")`` and order using ``order("field", "order")``, valid orders are "asc" -> ascending and "desc" -> descending. ``order("field")`` will use "desc" as default value
+
 
 ```python
 s = Search("Game of thrones")
-for t in s.order("time_add","asc")
+for t in s.order("time_add","asc"):
     lookup(t)
 ```
 
-If you dont give to the ``order()`` the second argument, default value will be
-``"desc"``.
-
-``all()`` returns all torrents beggining from current page, for example:
-
 ```python
-Search("Game of thrones").page(5).all()
+s = Search("Game of thrones")
+for t in s.category("tv"):
+    lookup(t)
 ```
 
-This will return all torrents, beggining at page 5.
+``all()`` returns all torrents starting on current page. 
 
-You can also pass adition parameters to ``Search``:
+```python
+Search("Game of thrones").all()
+```
+
+``pages(from,to)`` returns all torrents in interval from - to.
+
+```python
+Search("Game of thrones").pages(3,6)
+```
+
+Feel free to chain commands as you wish, only rule is to use all() or pages() as  
+last, because it directly returns Torrents. For example:
+
+```python
+for t in (Search("Game of thrones").category("tv").order("time_add","asc")
+          .page(84).next().previous().all()):
+    lookup(t)
+```
+
+You can also pass parameters directly:
 
 ```python
 Search("Game of thrones",category="games",field="size",order="desc")
 ```
 
-Don't use the ``category()`` or ``order()`` modificators after you've used 
-``pages()``.
+``Latest`` works exactly like ``Search``, but you can't use categories or pass search query.
 
-``Latest`` works exactly like ``Search``, but you can't use categories.
+```python
+for t in Latest().page(5):
+    lookup(t)
+```
