@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 
 """
-Simple kickass.to API by cyl1ch/FEE1DEAD 
+Simple kickass.to API by cyl1ch/FEE1DEAD
 """
 from pyquery import PyQuery
 from collections import namedtuple
+import threading
+import itertools
 
 # possible categories
 categories = ("movies", "tv", "music", "books", "games", "applications", "xxx")
@@ -27,34 +29,44 @@ class Latest(object):
     """
     Class for parsing latest torrents at http://www.kickass.to/new/
     """
-    def __init__(self, field=None, order=None):
-        self.url = "http://www.kickass.to/new"
-        self.tpage = 1
-        self.url += "/" + str(self.tpage) + "/"
+    def __init__(self, field=None, order=None, page=None):
+        self.tbase_url = "http://www.kickass.to/new"
+        if page:
+            self.tpage = page
+        else:
+            self.tpage = 1
         if field:
             if field not in fields:
                 raise ValueError("Field not recognized")
+            self.tfield = field
             if order:
                 if order not in orders:
                     raise ValueError("Order not recognized")
-            else:
-                order = "desc"
-            self.url += "?field=" + field + "&sorder=" + order
+                self.torder = order
+            self.torder = "desc"
+        else:
+            self.tfield = None
+            self.torder = None
 
-        pq = PyQuery(url=self.url)
+        pq = PyQuery(url=self._get_url())
         tds = int(pq("h2").text().split()[-1])
         if tds % 25:
             self.max_page = tds / 25 + 1
         else:
             self.max_page = tds / 25
 
+    def _get_url(self):
+        url = self.tbase_url + '/' + str(self.tpage) + '/'
+        if self.tfield:
+            url = url + "?field=" + self.tfield + "&sorder=" + self.torder
+        return url
+
     def _change_page(self, page):
         """
         Change current page without checking its validity
         """
-        size = len(str(self.tpage)) + 1
-        self.url = self.url[:-size] + str(page) + '/'
         self.tpage = page
+        return self.__class__(self.tfield, self.torder, self.tpage)
 
     def next(self):
         """
@@ -62,8 +74,7 @@ class Latest(object):
         """
         if self.tpage >= self.max_page:
             raise IndexError("Max page achieved")
-        self._change_page(self.tpage + 1)
-        return self
+        return self._change_page(self.tpage + 1)
 
     def previous(self):
         """
@@ -71,8 +82,7 @@ class Latest(object):
         """
         if self.tpage <= 1:
             raise IndexError("Page cant be lower than 1")
-        self._change_page(self.tpage - 1)
-        return self
+        return self._change_page(self.tpage - 1)
 
     def page(self, page_num):
         """
@@ -80,8 +90,7 @@ class Latest(object):
         """
         if page_num <= 1 and page_num > self.max_page:
             raise IndexError("Invalid page number")
-        self._change_page(page_num)
-        return self
+        return self._change_page(page_num)
 
     def pages(self, page_from, page_to):
         """
@@ -91,10 +100,31 @@ class Latest(object):
                    page_to <= self.max_page, page_to > page_from]):
             raise IndexError("Invalid page numbers")
 
-        ret = []
-        ret.extend(self.page(page_from).list())
-        for x in range(page_to - page_from):
-            ret.extend(self.next().list())
+        size = (page_to + 1) - page_from
+        threads = ret = []
+        page_list = [n for n in range(page_from, page_to+1)]
+
+        locks = [threading.Lock() for i in range(size)]
+
+        for pos, value in enumerate(locks):
+            if pos > 0:
+                value.acquire()
+
+        def t_function(pos):
+            res = self.page(page_list[pos]).list()
+            locks[pos].acquire()
+            ret.extend(res)
+            if pos != size-1:
+                locks[pos+1].release()
+
+        threads = [threading.Thread(target=t_function, args=(i,))
+                   for i in range(size)]
+
+        for thread in threads:
+            thread.start()
+
+        for thread in threads:
+            thread.join()
 
         for torrent in ret:
             yield torrent
@@ -112,7 +142,7 @@ class Latest(object):
         """
         Order by field and optional desc/asc
         """
-        return Latest(field=field, order=order)
+        return Latest(field=field, order=order, page=self.tpage)
 
     def __iter__(self):
         return self.items()
@@ -130,12 +160,14 @@ class Latest(object):
         """
         td = row("td")
         name = td("a.cellMainLink").text()
+        name = name.replace(" . ", ".").replace(" .", ".")
         author = td("a.plain").text()
         verified_author = True if td("img") else False
         category = td("span").find("strong").find("a").eq(0).text()
         verified_torrent = True if td("a.iverify.icon16") else False
         comments = td("a.icomment.icommentjs.icon16").text()
-        torrent_link = td("a.cellMainLink").attr("href")
+        torrent_link = "http://www.kickass.to"
+        torrent_link += td("a.cellMainLink").attr("href")
         magnet_link = td("a.imagnet.icon16").attr("href")
         download_link = td("a.idownload.icon16").eq(1).attr("href")
 
@@ -154,7 +186,7 @@ class Latest(object):
         """
         Parse url and yield namedtuple Torrent for every torrent on page
         """
-        pq = PyQuery(url=self.url)
+        pq = PyQuery(url=self._get_url())
         torrents = [self._get_torrent(x) for x in self._get_trs(pq)]
 
         for t in torrents:
@@ -164,7 +196,7 @@ class Latest(object):
         """
         Return list of Torrent namedtuples
         """
-        pq = PyQuery(url=self.url)
+        pq = PyQuery(url=self._get_url())
         torrents = [self._get_torrent(x) for x in self._get_trs(pq)]
 
         return torrents
@@ -174,49 +206,76 @@ class Search(Latest):
     """
     Class for parsing search results
     """
-    def __init__(self, query, category=None, field=None, order=None):
-        self.url = "http://www.kickass.to/search/"
-        self.tpage = 1
+    def __init__(self, query, category=None, field=None,
+                 order=None, page=None):
+        self.tbase_url = "http://www.kickass.to/search"
+        if page:
+            self.tpage = page
+        else:
+            self.tpage = 1
         if not query:
             raise ValueError("Query cant be blank")
         self.tquery = query
-        self.url += self.tquery
         if category:
             if category not in categories:
                 raise ValueError("Category not recognized")
             self.tcategory = category
-            self.url = self.url + " category:" + self.tcategory
         else:
             self.tcategory = None
-        self.url += "/" + str(self.tpage) + "/"
         if field:
             if field not in fields:
                 raise ValueError("Field not recognized")
+            self.tfield = field
             if order:
                 if order not in orders:
                     raise ValueError("Order not recognized")
+                self.torder = order
             else:
-                order = "desc"
-            self.url += "?field=" + field + "&sorder=" + order
+                self.torder = "desc"
+        else:
+            self.tfield = None
+            self.torder = None
 
-        pq = PyQuery(url=self.url)
-        text = pq("h2").text()
-        if "Nothing found" in text:
-            raise ValueError("Nothing found for your query")
-        self.max_page = int(text.split()[-1]) / 25 + 1
+        pq = PyQuery(url=self._get_url())
+        tds = int(pq("h2").text().split()[-1])
+        if tds % 25:
+            self.max_page = tds / 25 + 1
+        else:
+            self.max_page = tds / 25
+
+    def _get_url(self):
+        """
+        Assemble and return url
+        """
+        base_url = self.tbase_url + '/' + self.tquery
+        if self.tcategory:
+            base_url += " category:" + self.tcategory
+        url = base_url + '/' + str(self.tpage) + '/'
+        if self.tfield:
+            url = url + "?field=" + self.tfield + "&sorder=" + self.torder
+        return url
+
+    def _change_page(self, page):
+        """
+        Change current page without checking its validity
+        """
+        self.tpage = page
+        return self.__class__(self.tquery, self.tcategory,
+                              self.tfield, self.torder, self.tpage)
 
     def category(self, category):
         """
         Change category of current search
         """
-        return Search(self.tquery, category=category)
+        return Search(self.tquery, category=category, field=self.tfield,
+                      order=self.torder, page=self.tpage)
 
     def order(self, field, order=None):
         """
         Order by field and optional desc/asc
         """
-        return Search(self.tquery, category=self.tcategory,
-                      field=field, order=order)
+        return Search(self.tquery, category=self.tcategory, field=field,
+                      order=order, page=self.tpage)
 
 
 def lookup(Torrent):
