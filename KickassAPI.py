@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-Simple kickass.to API by cyl1ch/FEE1DEAD
-"""
 from pyquery import PyQuery
 from collections import namedtuple
 import threading
