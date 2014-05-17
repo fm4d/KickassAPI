@@ -203,9 +203,7 @@ class Latest(object):
 
 
 class Search(Latest):
-    """
-    Class for parsing search results
-    """
+
     def __init__(self, query, category=None, field=None,
                  order=None, page=None):
         self._base_url = "http://www.kickass.to/search"
