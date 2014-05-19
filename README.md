@@ -4,7 +4,7 @@ This is an unofficial Python API for kickass.to
 
 Usage
 =====
-There are two objects - ``Search`` for searching and Latest for ``kickass.to/new/``Torrents are parsed into `namedtuples` called Torrent and there is a function ``lookup()``if you want to simply print name, author, size and age of namedtuple Torrent.
+There are two objects - ``Search`` for searching and Latest for ``kickass.to/new/``Torrents are parsed into `namedtuples` called Torrent and there is a function ``lookup()`` to simply print name, author, size and age of namedtuple Torrent.
 
 Search for the first page of "Game of thrones" and print it with ``lookup()``:
 
@@ -20,7 +20,7 @@ for t in Search("Game of thrones").next():
     lookup(t)
 ```
     
-You can choose the category using ``category("category")`` and order using ``order("field", "order")``, valid orders are "asc" -> ascending and "desc" -> descending. ``order("field")`` will use "desc" as default value
+You can choose the category using ``category("category")`` and order using ``order("field", "order")``, valid orders are "asc" -> ascending and "desc" -> descending. ``order("field")`` will use "desc" as default value.
 
 
 ```python
@@ -35,20 +35,20 @@ for t in s.category("tv"):
     lookup(t)
 ```
 
-``all()`` returns all torrents starting on the current page. 
+``all()`` returns all torrents starting on the current page:
 
 ```python
 Search("Game of thrones").all()
 ```
 
-``pages(from,to)`` returns all torrents in the interval from - to.
+``pages(from,to)`` returns all torrents in the interval from - to:
 
 ```python
 Search("Game of thrones").pages(3,6)
 ```
 
 Feel free to chain commands as you wish, the only rule is to use all() or pages() as  
-last, because it directly returns Torrents. For example:
+last, because they return results instead of Torrent/Latest object. For example:
 
 ```python
 for t in (Search("Game of thrones").category("tv").order("time_add","asc")
@@ -62,7 +62,7 @@ You can also pass parameters directly:
 Search("Game of thrones",category="games",field="size",order="desc")
 ```
 
-``Latest`` works exactly like ``Search``, but you can't use categories or pass a search query.
+``Latest`` works exactly like ``Search``, but you can't use categories or pass a search query:
 
 ```python
 for t in Latest().page(5):
