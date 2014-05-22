@@ -2,8 +2,16 @@ KickassAPI
 ==========
 This is an unofficial Python API for kickass.to
 
+Installation
+-----------
+
+```
+pip install KickassAPI
+```
+
 Usage
-=====
+-----
+
 There are two objects - ``Search`` for searching and Latest for ``kickass.to/new/``Torrents are parsed into `namedtuples` called Torrent and there is a function ``lookup()`` to simply print name, author, size and age of namedtuple Torrent.
 
 Search for the first page of "Game of thrones" and print it with ``lookup()``:
