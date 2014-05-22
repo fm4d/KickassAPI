@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from distutils.core import setup
 
-url = 'https://github.com/FEE1DE4D/PyMarkovTextGenerator'
+url = 'https://github.com/FEE1DE4D/KickassAPI'
 setup(
     name='KickassAPI',
     version='1.0.0',
