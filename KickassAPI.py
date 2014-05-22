@@ -5,6 +5,9 @@
 # Author: FEE1DE4D
 
 
+# TODO
+# JSON export
+
 from pyquery import PyQuery
 from collections import namedtuple
 import threading
