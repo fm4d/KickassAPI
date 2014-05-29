@@ -28,10 +28,10 @@ class CATEGORY(object):
 
 class ORDER(object):
     SIZE = "size"
-    FILES_COUNT = "files"
-    AGE = "age"
-    SEED = "seed"
-    LEECH = "leech"
+    FILES_COUNT = "files_count"
+    AGE = "time_add"
+    SEED = "seeders"
+    LEECH = "leechers"
     ASC = "asc"
     DESC = "desc"
 
