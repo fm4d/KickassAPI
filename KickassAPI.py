@@ -86,6 +86,7 @@ class Url(object):
 
 
 class LatestUrl(Url):
+
     def __init__(self, page, order):
         self.base = BASE.LATEST
         self.page = page
@@ -132,7 +133,6 @@ class Results(object):
     Abstract base class that contains basic functionality for parsing page
     containing torrents, generating namedtuples and iterating over them.
     """
-
     url = None
 
     def __iter__(self):
