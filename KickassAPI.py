@@ -5,157 +5,155 @@
 # Author: FEE1DE4D
 
 
-# TODO
-# JSON export
-
+# IMPORTS
 from pyquery import PyQuery
-from collections import namedtuple
 import threading
-
-# possible categories
-categories = ("movies", "tv", "music", "books", "games", "applications", "xxx")
-# possible fields
-fields = ("size", "file_count", "time_add", "seeders", "leechers")
-# possible orders
-orders = ("asc", "desc")
-
-# Namedtuple for single torrent
-Torrent = namedtuple("Torrent", ["name", "author", "verified_author",
-                                 "category", "size", "files", "age", "seed",
-                                 "leech", "verified_torrent", "comments",
-                                 "torrent_link", "magnet_link", "download_link"
-                                 ])
+import sys
+from collections import namedtuple
 
 
-class Latest(object):
+# CONSTANTS
+class BASE(object):
+    SEARCH = "http://www.kickass.to/usearch/"
+    LATEST = "http://www.kickass.to/new/"
 
-    def __init__(self, field=None, order=None, page=None):
-        self._base_url = "http://www.kickass.to/new"
-        if page:
-            self._page = page
-        else:
-            self._page = 1
-        if field:
-            if field not in fields:
-                raise ValueError("Field not recognized")
-            self._field = field
-            if order:
-                if order not in orders:
-                    raise ValueError("Order not recognized")
-                self._order = order
-            self._order = "desc"
-        else:
-            self._field = None
-            self._order = None
+class CATEGORY(object):
+    MOVIES = "movies"
+    TV = "tv"
+    MUSIC = "music"
+    BOOKS = "books"
+    GAMES = "games"
+    APPLICATIONS = "applications"
+    XXX = "xxx"
 
-        pq = PyQuery(url=self._get_url())
-        tds = int(pq("h2").text().split()[-1])
-        if tds % 25:
-            self._max_page = tds / 25 + 1
-        else:
-            self._max_page = tds / 25
+class ORDER(object):
+    SIZE = "size"
+    FILES_COUNT = "files"
+    AGE = "age"
+    SEED = "seed"
+    LEECH = "leech"
+    ASC = "asc"
+    DESC = "desc"
 
-    def _get_url(self):
+
+# Namedtuple representing single torrent
+class Torrent(namedtuple("Torrent", ["name", "author", "verified_author",
+                                     "category", "size", "files", "age",
+                                     "seed", "leech", "verified_torrent",
+                                     "comments", "torrent_link",
+                                     "magnet_link", "download_link"
+                                    ])):
+    def lookup(self):
         """
-        Assemble and return url
+        Print name, author, size and age of Torrent
         """
-        url = self._base_url + '/' + str(self._page) + '/'
-        if self._field:
-            url = url + "?field=" + self._field + "&sorder=" + self._order
-        return url
+        print "%s by %s, size: %s, uploaded %s ago" % (self.name, self.author,
+                                                       self.size, self.age)
 
-    def _change_page(self, page):
-        """
-        Change current page without checking its validity
-        """
-        self._page = page
-        return self.__class__(self._field, self._order, self._page)
 
-    def next(self):
-        """
-        Increment page by one
-        """
-        if self._page >= self._max_page:
+class Url(object):
+    """
+    Abstract class for holding and building url
+    """
+    def next_page(self):
+        if self.page >= self.max_page:
             raise IndexError("Max page achieved")
-        return self._change_page(self._page + 1)
+        self.page += 1
 
-    def previous(self):
-        """
-        Decrement page by one
-        """
-        if self._page <= 1:
-            raise IndexError("Page cant be lower than 1")
-        return self._change_page(self._page - 1)
+    def previous_page(self):
+        if self.page <= 1:
+            raise IndexError("Min page achieved")
+        self.page -= 1
 
-    def page(self, page_num):
-        """
-        Change page to page_num
-        """
-        if page_num <= 1 and page_num > self._max_page:
+    def set_page(self, page):
+        if page < 1 or page > self.max_page:
             raise IndexError("Invalid page number")
-        return self._change_page(page_num)
+        self.page = page
 
-    def pages(self, page_from, page_to):
-        """
-        Yield torrents in range from page_from to page_to
-        """
-        if not all([page_from < self._max_page,  page_from > 0,
-                   page_to <= self._max_page, page_to > page_from]):
-            raise IndexError("Invalid page numbers")
+    def _get_max_page(self, url):
+        pq = PyQuery(url)
+        try:
+            tds = int(pq("h2").text().split()[-1])
+            if tds % 25:
+                return tds / 25 + 1
+            return tds / 25
+        except ValueError:
+            sys.stderr.write("No results found!\n")
+            sys.exit()
 
-        size = (page_to + 1) - page_from
-        threads = ret = []
-        page_list = [n for n in range(page_from, page_to+1)]
+    def build(self):
+        raise NotImplementedError("This method must be overwritten")
 
-        locks = [threading.Lock() for i in range(size)]
 
-        for pos, value in enumerate(locks):
-            if pos > 0:
-                value.acquire()
+class LatestUrl(Url):
+    def __init__(self, page, order):
+        self.base = BASE.LATEST
+        self.page = page
+        self.order = order
+        self.max_page = None
+        self.build()
 
-        def t_function(pos):
-            res = self.page(page_list[pos]).list()
-            locks[pos].acquire()
-            ret.extend(res)
-            if pos != size-1:
-                locks[pos+1].release()
+    def build(self):
+        ret = self.base + str(self.page) + "/"
+        if self.order:
+            ret += "?field=" + self.order[0] + "&sorder=" + self.order[1]
 
-        threads = [threading.Thread(target=t_function, args=(i,))
-                   for i in range(size)]
+        self.max_page = self._get_max_page(ret)
+        return ret
 
-        for thread in threads:
-            thread.start()
 
-        for thread in threads:
-            thread.join()
 
-        for torrent in ret:
-            yield torrent
+class SearchUrl(Url):
 
-    def all(self):
-        """
-        Yield torrents in range from current page to last page
-        """
-        if(self._page == self._max_page):
-            return self
+    def __init__(self, query, page, category, order):
+        self.base = BASE.SEARCH
+        self.query = query
+        self.page = page
+        self.category = category
+        self.order = order
+        self.max_page = None
+        self.build()
 
-        return self.pages(self._page, self._max_page)
+    def build(self):
+        ret = self.base + self.query
+        if self.category:
+            ret += " category:" + self.category
+        ret += "/" + str(self.page) + "/"
+        if self.order:
+            ret += "?field=" + self.order[0] + "&sorder=" + self.order[1]
 
-    def order(self, field, order=None):
-        """
-        Return new Lates with field and order set by arguments
-        """
-        return Latest(field=field, order=order, page=self._page)
+        self.max_page = self._get_max_page(ret)
+        return ret
+
+
+
+class Results(object):
+    """
+    Abstract base class that contains basic functionality for parsing page
+    containing torrents, generating namedtuples and iterating over them.
+    """
+
+    url = None
 
     def __iter__(self):
-        return self.items()
+        return self._items()
 
-    def _get_trs(self, pq):
+    def _items(self):
         """
-        Return all rows on page
+        Parse url and yield namedtuple Torrent for every torrent on page
         """
-        rows = pq("table.data").find("tr")
-        return [rows.eq(x) for x in range(rows.size())][1:]
+        torrents = map(self._get_torrent, self._get_rows())
+
+        for t in torrents:
+            yield t
+
+    def list(self):
+        """
+        Return list of Torrent namedtuples
+        """
+        torrents = map(self._get_torrent, self._get_rows())
+
+        return torrents
 
     def _get_torrent(self, row):
         """
@@ -181,107 +179,115 @@ class Latest(object):
         seed = td_centers.eq(3).text()
         leech = td_centers.eq(4).text()
 
-        return Torrent(name, author, verified_author, category, size, files,
-                       age, seed, leech, verified_torrent, comments,
+        return Torrent(name, author, verified_author, category, size,
+                       files, age, seed, leech, verified_torrent, comments,
                        torrent_link, magnet_link, download_link)
 
-    def items(self):
+    def _get_rows(self):
         """
-        Parse url and yield namedtuple Torrent for every torrent on page
+        Return all rows on page
         """
-        pq = PyQuery(url=self._get_url())
-        torrents = [self._get_torrent(x) for x in self._get_trs(pq)]
+        #TODO - caching
+        pq = PyQuery(url=self.url.build())
+        rows = pq("table.data").find("tr")
+        return map(rows.eq, range(rows.size()))[1:]
 
-        for t in torrents:
-            yield t
-
-    def list(self):
+    def next(self):
         """
-        Return list of Torrent namedtuples
+        Increment page by one and return self
         """
-        pq = PyQuery(url=self._get_url())
-        torrents = [self._get_torrent(x) for x in self._get_trs(pq)]
+        self.url.next_page()
+        return self
 
-        return torrents
-
-
-class Search(Latest):
-
-    def __init__(self, query, category=None, field=None,
-                 order=None, page=None):
-        self._base_url = "http://www.kickass.to/search"
-        if page:
-            self._page = page
-        else:
-            self._page = 1
-        if not query:
-            raise ValueError("Query cant be blank")
-        self._query = query
-        if category:
-            if category not in categories:
-                raise ValueError("Category not recognized")
-            self._category = category
-        else:
-            self._category = None
-        if field:
-            if field not in fields:
-                raise ValueError("Field not recognized")
-            self._field = field
-            if order:
-                if order not in orders:
-                    raise ValueError("Order not recognized")
-                self._order = order
-            else:
-                self._order = "desc"
-        else:
-            self._field = None
-            self._order = None
-
-        pq = PyQuery(url=self._get_url())
-        tds = int(pq("h2").text().split()[-1])
-        if tds % 25:
-            self._max_page = tds / 25 + 1
-        else:
-            self._max_page = tds / 25
-
-    def _get_url(self):
+    def previous(self):
         """
-        Assemble and return url
+        Decrement page by one and return self
         """
-        base_url = self._base_url + '/' + self._query
-        if self._category:
-            base_url += " category:" + self._category
-        url = base_url + '/' + str(self._page) + '/'
-        if self._field:
-            url = url + "?field=" + self._field + "&sorder=" + self._order
-        return url
+        self.url.previous_page()
+        return self
 
-    def _change_page(self, page):
+    def page(self, page):
         """
-        Change current page without checking its validity
+        Change page to page_num
         """
-        self._page = page
-        return self.__class__(self._query, self._category,
-                              self._field, self._order, self._page)
+        self.url.set_page(page)
+        return self
+
+    def pages(self, page_from, page_to):
+        """
+        Yield torrents in range from page_from to page_to
+        """
+        if not all([page_from < self.url.max_page, page_from > 0,
+                   page_to <= self.url.max_page, page_to > page_from]):
+            raise IndexError("Invalid page numbers")
+
+        size = (page_to + 1) - page_from
+        threads = ret = []
+        page_list = range(page_from, page_to+1)
+
+        locks = [threading.Lock() for i in range(size)]
+
+        #for pos, value in enumerate(locks):
+        #    if pos > 0:
+        #       value.acquire()
+
+
+        for lock in locks[1:]:
+            lock.acquire()
+
+        def t_function(pos):
+            res = self.page(page_list[pos]).list()
+            locks[pos].acquire()
+            ret.extend(res)
+            if pos != size-1:
+                locks[pos+1].release()
+
+        threads = [threading.Thread(target=t_function, args=(i,))
+                   for i in range(size)]
+
+        for thread in threads:
+            thread.start()
+
+        for thread in threads:
+            thread.join()
+
+        for torrent in ret:
+            yield torrent
+
+    def all(self):
+        """
+        Yield torrents in range from current page to last page
+        """
+        return self.pages(self.url.page, self.url.max_page)
+
+    def order(self, field, order=None):
+        """
+        Set field and order set by arguments
+        """
+        if not order:
+            order = ORDER.DESC
+        self.url.order = (field, order)
+        self.url.set_page(1)
+        return self
+
+
+
+class Latest(Results):
+
+    def __init__(self, page=1, order=None):
+        self.url = LatestUrl(page, order)
+
+
+
+class Search(Results):
+
+    def __init__(self, query, page=1, category=None, order=None):
+        self.url = SearchUrl(query, page, category, order)
 
     def category(self, category):
         """
         Change category of current search
         """
-        return Search(self._query, category=category, field=self._field,
-                      order=self._order, page=self._page)
-
-    def order(self, field, order=None):
-        """
-        Order by field and optional desc/asc
-        """
-        return Search(self._query, category=self._category, field=field,
-                      order=order, page=self._page)
-
-
-def lookup(Torrent):
-    """
-    Print basic stuff from namedtuple Torrent
-    """
-    print "%s by %s, size: %s, uploaded %s ago" % (Torrent[0], Torrent[1],
-                                                   Torrent[4], Torrent[6])
+        self.url.category = category
+        self.url.set_page(1)
+        return self
