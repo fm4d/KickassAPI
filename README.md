@@ -1,6 +1,6 @@
 KickassAPI
 ==========
-This is an unofficial Python API for kickass.to
+This is an unofficial python API for kickass.to partially inspired by https://github.com/karan/TPB
 
 Installation
 -----------
@@ -12,67 +12,53 @@ pip install KickassAPI
 Usage
 -----
 
-There are two objects - ``Search`` for searching and Latest for ``kickass.to/new/``Torrents are parsed into `namedtuples` called Torrent and there is a function ``lookup()`` to simply print name, author, size and age of namedtuple Torrent.
-
-Search for the first page of "Game of thrones" and print it with ``lookup()``:
+```Search``` represents ```http://kickass.to/usearch/``` and ```Latest``` ```http://kickass.to/new/```  
 
 ```python
+from KickassAPI import Search, Latest, CATEGORY, ORDER
+
+#Print the basic info about first 25 results of "Game of thrones" search
 for t in Search("Game of thrones"):
-    lookup(t)
-```
+    t.lookup()
 
-``next()`` and ``previous()`` allow traversing through result pages:
-
-```python
+#Do the same with second page
 for t in Search("Game of thrones").next():
-    lookup(t)
-```
-    
-You can choose the category using ``category("category")`` and order using ``order("field", "order")``, valid orders are "asc" -> ascending and "desc" -> descending. ``order("field")`` will use "desc" as default value.
+    t.lookup()
 
+#Or
+for t in Search("Gameof thrones").page(2):
+    t.lookup()
 
-```python
-s = Search("Game of thrones")
-for t in s.order("time_add","asc"):
-    lookup(t)
-```
+#Order results by age
+Search("Game of thrones").order(ORDER.AGE)
 
-```python
-s = Search("Game of thrones")
-for t in s.category("tv"):
-    lookup(t)
-```
+#Default order is descending, you can specify ascending order:
+Search("Game of thrones").order(ORDER.AGE, ORDER.ASC)
 
-``all()`` returns all torrents starting on the current page:
+#Specify category
+Search("Game of thrones").category(CATEGORY.MOVIES)
 
-```python
-Search("Game of thrones").all()
-```
+#Feel free to chain these, but remember that order or category resets page to 1
+Search("Game of thrones").category(CATEGORY.GAMES).order(ORDER.FILES_COUNT).next()
 
-``pages(from,to)`` returns all torrents in the interval from - to:
+#Latest has the same behaviour as Search but lacks the ```category()``` method and has no query string
+for t in Latest().order(ORDER.SEED):
+    t.lookup()
 
-```python
-Search("Game of thrones").pages(3,6)
-```
+#Page, order and category can be also specified in constructor
+Search("Game of thrones", category=CATEGORY.GAMES, order=ORDER.AGE, page=5)
 
-Feel free to chain commands as you wish, the only rule is to use all() or pages() as  
-last, because they return results instead of Torrent/Latest object. For example:
+#Get results from multiple pages
+for t in Latest().order(ORDER.AGE).pages(3,6):
+    t.lookup()
 
-```python
-for t in (Search("Game of thrones").category("tv").order("time_add","asc")
-          .page(84).next().previous().all()):
-    lookup(t)
-```
+#Get results from all pages starting with the actual page
+for t in Latest().all():
+    t.lookup()
 
-You can also pass parameters directly:
+#Get list of torrent objects instead of iterator
+Latest().list()
 
-```python
-Search("Game of thrones",category="games",field="size",order="desc")
-```
+#pages(), all() and list() cant be followed by any other method!
 
-``Latest`` works exactly like ``Search``, but you can't use categories or pass a search query:
-
-```python
-for t in Latest().page(5):
-    lookup(t)
 ```
