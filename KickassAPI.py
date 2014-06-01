@@ -4,6 +4,14 @@
 # Version: 2.7
 # Author: FEE1DE4D
 
+"""
+This is an unofficial python API for kickass.to partially
+inspired by https://github.com/karan/TPB.karan
+
+by FEE1DE4D (fee1de4d@gmail.com)
+under GPLv2 (http://www.gnu.org/licenses/gpl-2.0.html)
+"""
+
 
 # IMPORTS
 from pyquery import PyQuery
@@ -36,16 +44,19 @@ class ORDER(object):
     DESC = "desc"
 
 
-# Namedtuple representing single torrent
 class Torrent(namedtuple("Torrent", ["name", "author", "verified_author",
                                      "category", "size", "files", "age",
                                      "seed", "leech", "verified_torrent",
                                      "comments", "torrent_link",
                                      "magnet_link", "download_link"
                                     ])):
+    """
+    Namedtuple that holds information about single torrent
+    Subclassed to add "lookup" function
+    """
     def lookup(self):
         """
-        Print name, author, size and age of Torrent
+        Prints name, author, size and age
         """
         print "%s by %s, size: %s, uploaded %s ago" % (self.name, self.author,
                                                        self.size, self.age)
@@ -53,14 +64,15 @@ class Torrent(namedtuple("Torrent", ["name", "author", "verified_author",
 
 class Url(object):
     """
-    Abstract class for holding and building url
+    Abstract class that provides functionality for holding and
+    building url. Subclass must overwrite constructor and build method.
     """
-    def next_page(self):
+    def inc_page(self):
         if self.page >= self.max_page:
             raise IndexError("Max page achieved")
         self.page += 1
 
-    def previous_page(self):
+    def dec_page(self):
         if self.page <= 1:
             raise IndexError("Min page achieved")
         self.page -= 1
@@ -71,6 +83,9 @@ class Url(object):
         self.page = page
 
     def _get_max_page(self, url):
+        """
+        Open url and return ammount of pages
+        """
         pq = PyQuery(url)
         try:
             tds = int(pq("h2").text().split()[-1])
@@ -82,24 +97,33 @@ class Url(object):
             sys.exit()
 
     def build(self):
+        """
+        Build and return url. Must be overwritten in subclass.
+        """
         raise NotImplementedError("This method must be overwritten")
 
 
 class LatestUrl(Url):
 
-    def __init__(self, page, order):
+    def __init__(self, page, order, ):
         self.base = BASE.LATEST
         self.page = page
         self.order = order
         self.max_page = None
         self.build()
 
-    def build(self):
-        ret = self.base + str(self.page) + "/"
-        if self.order:
-            ret += "?field=" + self.order[0] + "&sorder=" + self.order[1]
+    def build(self, update=True):
+        """
+        Build and return url. Also updates max_page.
+        """
+        ret = "".join((self.base, str(self.page), "/"))
 
-        self.max_page = self._get_max_page(ret)
+        if self.order:
+            ret += "".join(("?field=", self.order[0],"&sorder=",self.order[1]))
+
+        if update:
+            self.max_page = self._get_max_page(ret)
+
         return ret
 
 
@@ -115,24 +139,37 @@ class SearchUrl(Url):
         self.max_page = None
         self.build()
 
-    def build(self):
+    def build(self, update=True):
+        """
+        Build and return url. Also update max_page.
+        """
         ret = self.base + self.query
-        if self.category:
-            ret += " category:" + self.category
-        ret += "/" + str(self.page) + "/"
-        if self.order:
-            ret += "?field=" + self.order[0] + "&sorder=" + self.order[1]
+        page = "".join(("/", str(self.page), "/"))
 
-        self.max_page = self._get_max_page(ret)
+        if self.category:
+            category = " category:" + self.category
+        else:
+            category = ""
+
+        if self.order:
+            order = "".join(("?field=",self.order[0],"&sorder=",self.order[1]))
+        else:
+            order = ""
+
+        ret = "".join((self.base, self.query, category, page, order))
+
+        if update:
+            self.max_page = self._get_max_page(ret)
         return ret
 
 
 
 class Results(object):
     """
-    Abstract base class that contains basic functionality for parsing page
+    Abstract class that contains basic functionality for parsing page
     containing torrents, generating namedtuples and iterating over them.
     """
+    # Get rid of linting errors
     url = None
 
     def __iter__(self):
@@ -196,14 +233,14 @@ class Results(object):
         """
         Increment page by one and return self
         """
-        self.url.next_page()
+        self.url.inc_page()
         return self
 
     def previous(self):
         """
         Decrement page by one and return self
         """
-        self.url.previous_page()
+        self.url.dec_page()
         return self
 
     def page(self, page):
@@ -218,7 +255,7 @@ class Results(object):
         Yield torrents in range from page_from to page_to
         """
         if not all([page_from < self.url.max_page, page_from > 0,
-                   page_to <= self.url.max_page, page_to > page_from]):
+                    page_to <= self.url.max_page, page_to > page_from]):
             raise IndexError("Invalid page numbers")
 
         size = (page_to + 1) - page_from
@@ -236,6 +273,9 @@ class Results(object):
             lock.acquire()
 
         def t_function(pos):
+            """
+            Thread function that fetch page for list of torrents
+            """
             res = self.page(page_list[pos]).list()
             locks[pos].acquire()
             ret.extend(res)
@@ -273,20 +313,24 @@ class Results(object):
 
 
 class Latest(Results):
-
+    """
+    Results subclass that represents http://kickass.to/new/
+    """
     def __init__(self, page=1, order=None):
         self.url = LatestUrl(page, order)
 
 
 
 class Search(Results):
-
+    """
+    Results subclass that represents http://kickass.to/usearch/
+    """
     def __init__(self, query, page=1, category=None, order=None):
         self.url = SearchUrl(query, page, category, order)
 
     def category(self, category):
         """
-        Change category of current search
+        Change category of current search and return self
         """
         self.url.category = category
         self.url.set_page(1)
