@@ -4,7 +4,7 @@ from distutils.core import setup
 URL = 'https://github.com/FEE1DE4D/KickassAPI'
 setup(
     name='KickassAPI',
-    version='1.0.2',
+    version='1.0.3',
     py_modules=['KickassAPI'],
 
     author='FEE1DE4D',
