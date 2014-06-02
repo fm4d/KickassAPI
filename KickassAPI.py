@@ -6,7 +6,7 @@
 
 """
 This is an unofficial python API for kickass.to partially
-inspired by https://github.com/karan/TPB.karan
+inspired by https://github.com/karan/TPB
 
 by FEE1DE4D (fee1de4d@gmail.com)
 under GPLv2 (http://www.gnu.org/licenses/gpl-2.0.html)
