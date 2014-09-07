@@ -15,6 +15,11 @@ setup(
     license='GPLv2+',
 
     long_description="Documentation can be found here " + URL,
+    
+     install_requires=[
+        'setuptools',
+        "pyquery",
+    ],
 
     classifiers=[
         "License :: OSI Approved :: GNU General Public License v2 or later ("
