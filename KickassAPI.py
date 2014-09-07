@@ -16,7 +16,6 @@ under GPLv2 (http://www.gnu.org/licenses/gpl-2.0.html)
 # IMPORTS
 from pyquery import PyQuery
 import threading
-import sys
 from collections import namedtuple
 
 
@@ -93,8 +92,7 @@ class Url(object):
                 return tds / 25 + 1
             return tds / 25
         except ValueError:
-            sys.stderr.write("No results found!\n")
-            sys.exit()
+            raise ValueError("No results found!")
 
     def build(self):
         """
