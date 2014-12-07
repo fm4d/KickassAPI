@@ -83,7 +83,7 @@ class Url(object):
 
     def _get_max_page(self, url):
         """
-        Open url and return ammount of pages
+        Open url and return amount of pages
         """
         pq = PyQuery(url)
         try:
