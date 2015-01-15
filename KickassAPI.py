@@ -203,7 +203,8 @@ class Results(object):
         verified_torrent = True if td("a.iverify.icon16") else False
         comments = td("a.icomment.icommentjs.icon16").text()
         torrent_link = "http://www.kickass.to"
-        torrent_link += td("a.cellMainLink").attr("href")
+        if td("a.cellMainLink").attr("href") is not None:
+            torrent_link += td("a.cellMainLink").attr("href")
         magnet_link = td("a.imagnet.icon16").attr("href")
         download_link = td("a.idownload.icon16").eq(1).attr("href")
 
