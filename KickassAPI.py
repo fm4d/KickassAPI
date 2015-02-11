@@ -12,17 +12,18 @@ by FEE1DE4D (fee1de4d@gmail.com)
 under GPLv2 (http://www.gnu.org/licenses/gpl-2.0.html)
 """
 
-
 # IMPORTS
 from pyquery import PyQuery
 import threading
 from collections import namedtuple
+import requests
 
 
 # CONSTANTS
 class BASE(object):
     SEARCH = "http://www.kickass.to/usearch/"
     LATEST = "http://www.kickass.to/new/"
+
 
 class CATEGORY(object):
     MOVIES = "movies"
@@ -32,6 +33,7 @@ class CATEGORY(object):
     GAMES = "games"
     APPLICATIONS = "applications"
     XXX = "xxx"
+
 
 class ORDER(object):
     SIZE = "size"
@@ -85,7 +87,8 @@ class Url(object):
         """
         Open url and return amount of pages
         """
-        pq = PyQuery(url)
+        html = requests.get(url).text
+        pq = PyQuery(html)
         try:
             tds = int(pq("h2").text().split()[-1])
             if tds % 25:
@@ -115,15 +118,13 @@ class LatestUrl(Url):
         Build and return url. Also updates max_page.
         """
         ret = "".join((self.base, str(self.page), "/"))
-
         if self.order:
-            ret += "".join(("?field=", self.order[0],"&sorder=",self.order[1]))
+            ret += "".join(("?field=", self.order[0], "&sorder=", self.order[1]))
 
         if update:
             self.max_page = self._get_max_page(ret)
 
         return ret
-
 
 
 class SearchUrl(Url):
@@ -150,7 +151,7 @@ class SearchUrl(Url):
             category = ""
 
         if self.order:
-            order = "".join(("?field=",self.order[0],"&sorder=",self.order[1]))
+            order = "".join(("?field=", self.order[0], "&sorder=", self.order[1]))
         else:
             order = ""
 
@@ -159,7 +160,6 @@ class SearchUrl(Url):
         if update:
             self.max_page = self._get_max_page(ret)
         return ret
-
 
 
 class Results(object):
@@ -223,8 +223,8 @@ class Results(object):
         """
         Return all rows on page
         """
-        #TODO - caching
-        pq = PyQuery(url=self.url.build())
+        html = requests.get(self.url.build()).text
+        pq = PyQuery(html)
         rows = pq("table.data").find("tr")
         return map(rows.eq, range(rows.size()))[1:]
 
@@ -262,11 +262,6 @@ class Results(object):
         page_list = range(page_from, page_to+1)
 
         locks = [threading.Lock() for i in range(size)]
-
-        #for pos, value in enumerate(locks):
-        #    if pos > 0:
-        #       value.acquire()
-
 
         for lock in locks[1:]:
             lock.acquire()
@@ -310,14 +305,12 @@ class Results(object):
         return self
 
 
-
 class Latest(Results):
     """
     Results subclass that represents http://kickass.to/new/
     """
     def __init__(self, page=1, order=None):
         self.url = LatestUrl(page, order)
-
 
 
 class Search(Results):
