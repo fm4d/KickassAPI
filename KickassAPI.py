@@ -23,6 +23,7 @@ import requests
 class BASE(object):
     SEARCH = "http://www.kickass.to/usearch/"
     LATEST = "http://www.kickass.to/new/"
+    USER = "http://www.kickass.to/user/"
 
 
 class CATEGORY(object):
@@ -156,6 +157,33 @@ class SearchUrl(Url):
             order = ""
 
         ret = "".join((self.base, self.query, category, page, order))
+
+        if update:
+            self.max_page = self._get_max_page(ret)
+        return ret
+
+
+class UserUrl(Url):
+
+    def __init__(self, user, page, order):
+        self.base = BASE.USER
+        self.user = user
+        self.page = page
+        self.order = order
+        self.max_page = None
+        self.build()
+
+    def build(self, update=True):
+        """
+        Build and return url. Also update max_page.
+        URL structure for user torrent lists differs from other result lists
+        as the page number is part of the query string and not the URL path
+        """
+        query_str = "?page={}".format(self.page)
+        if self.order:
+            query_str += "".join(("&field=", self.order[0], "&sorder=",self.order[1]))
+
+        ret = "".join((self.base, self.user, "/uploads/", query_str))
 
         if update:
             self.max_page = self._get_max_page(ret)
@@ -311,6 +339,14 @@ class Latest(Results):
     """
     def __init__(self, page=1, order=None):
         self.url = LatestUrl(page, order)
+
+
+class User(Results):
+    """
+    Results subclass that represents http://kickass.to/user/
+    """
+    def __init__(self, user, page=1, order=None):
+        self.url = UserUrl(user, page, order)
 
 
 class Search(Results):
