@@ -6,7 +6,7 @@ This submodule uses pytest framework: http://pytest.org
 """
 class TestURL:
     """
-    Url, LatestUrl and SearchUrl tests
+    Url, LatestUrl, UserUrl, and SearchUrl tests
     """
     def setup_method(self, method):
         self.url = KickassAPI.Url()
@@ -58,4 +58,14 @@ class TestURL:
                "?field=size&sorder=desc")
         assert search2.build(update=False) == res2
 
+    def test_user_build(self):
+        user = KickassAPI.UserUrl("reduxionist", 1, None)
+        res = "http://www.kickass.to/user/reduxionist/uploads/?page=1"
+        assert user.build(update=False) == res
+
+        user2 = KickassAPI.UserUrl("reduxionist", 1, (KickassAPI.ORDER.SIZE,
+                                                      KickassAPI.ORDER.DESC))
+        res2 = ("http://www.kickass.to/user/reduxionist/uploads/"
+               "?page=1&field=size&sorder=desc")
+        assert user2.build(update=False) == res2
 

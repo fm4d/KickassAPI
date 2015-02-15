@@ -12,10 +12,10 @@ pip install KickassAPI
 Usage
 -----
 
-```Search``` represents ```http://kickass.to/usearch/``` and ```Latest``` ```http://kickass.to/new/```  
+```Search``` represents ```http://kickass.to/usearch/```, ```Latest``` ```http://kickass.to/new/```, and ```User``` ```http://kickass.to/user/username/uploads/```
 
 ```python
-from KickassAPI import Search, Latest, CATEGORY, ORDER
+from KickassAPI import Search, Latest, User, CATEGORY, ORDER
 
 #Print the basic info about first 25 results of "Game of thrones" search
 for t in Search("Game of thrones"):
@@ -45,6 +45,10 @@ Search("Game of thrones").category(CATEGORY.GAMES).order(ORDER.FILES_COUNT).next
 for t in Latest().order(ORDER.SEED):
     t.lookup()
 
+#User also has the same behaviour as Search, and also lacks the ```category()``` method, but takes a username in place of a query string
+for t in User('reduxionist'):
+    t.lookup()
+
 #Page, order and category can be also specified in constructor
 Search("Game of thrones", category=CATEGORY.GAMES, order=ORDER.AGE, page=5)
 
@@ -59,6 +63,6 @@ for t in Latest().all():
 #Get list of torrent objects instead of iterator
 Latest().list()
 
-#pages(), all() and list() cant be followed by any other method!
+#pages(), all() and list() can't be followed by any other method!
 
 ```
