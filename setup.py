@@ -4,11 +4,11 @@ from distutils.core import setup
 URL = 'https://github.com/FEE1DE4D/KickassAPI'
 setup(
     name='KickassAPI',
-    version='1.0.3',
+    version='1.0.4',
     py_modules=['KickassAPI'],
 
-    author='FEE1DE4D',
-    author_email='fee1de4d@gmail.com',
+    author='fm4d',
+    author_email='m@fm4d.net',
 
     url=URL,
     description='Python API for kickass.to',
@@ -18,7 +18,8 @@ setup(
     
      install_requires=[
         'setuptools',
-        "pyquery",
+        'pyquery',
+        'requests',
     ],
 
     classifiers=[
