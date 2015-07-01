@@ -19,12 +19,12 @@ from collections import namedtuple
 import requests
 import re
 
-
+domain='kat.cr'
 # CONSTANTS
 class BASE(object):
-    SEARCH = "http://www.kickass.to/usearch/"
-    LATEST = "http://www.kickass.to/new/"
-    USER = "http://www.kickass.to/user/"
+    SEARCH = "http://"+domain+"/usearch/"
+    LATEST = "http://"+domain+"/new/"
+    USER = "http://"+domain+"/user/"
 
 
 class CATEGORY(object):
