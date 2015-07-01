@@ -19,9 +19,9 @@ from collections import namedtuple
 import requests
 import re
 
-domain='kat.cr'
 # CONSTANTS
 class BASE(object):
+    domain='kat.cr'
     SEARCH = "http://"+domain+"/usearch/"
     LATEST = "http://"+domain+"/new/"
     USER = "http://"+domain+"/user/"
