@@ -1,6 +1,8 @@
 import KickassAPI
 import pytest
 
+BASE_URL = "http://" + KickassAPI.BASE.domain
+
 """
 This submodule uses pytest framework: http://pytest.org
 """
@@ -39,33 +41,33 @@ class TestURL:
 
     def test_latest_build(self):
         latest = KickassAPI.LatestUrl(1, None)
-        res = "http://www.kickass.to/new/1/"
+        res = BASE_URL + "/new/1/"
         assert latest.build(update=False) == res
 
         latest2 = KickassAPI.LatestUrl(1, (KickassAPI.ORDER.AGE,
                                            KickassAPI.ORDER.ASC))
-        res2 = "http://www.kickass.to/new/1/?field=time_add&sorder=asc"
+        res2 = BASE_URL + "/new/1/?field=time_add&sorder=asc"
         assert latest2.build(update=False) == res2
 
     def test_search_build(self):
         search = KickassAPI.SearchUrl("test", 1, None, None)
-        res = "http://www.kickass.to/usearch/test/1/"
+        res = BASE_URL + "/usearch/test/1/"
         assert search.build(update=False) == res
 
         search2 = KickassAPI.SearchUrl("test", 1, KickassAPI.CATEGORY.GAMES,
                             (KickassAPI.ORDER.SIZE, KickassAPI.ORDER.DESC))
-        res2 = ("http://www.kickass.to/usearch/test category:games/1/"
+        res2 = (BASE_URL + "/usearch/test category:games/1/"
                "?field=size&sorder=desc")
         assert search2.build(update=False) == res2
 
     def test_user_build(self):
         user = KickassAPI.UserUrl("reduxionist", 1, None)
-        res = "http://www.kickass.to/user/reduxionist/uploads/?page=1"
+        res = BASE_URL + "/user/reduxionist/uploads/?page=1"
         assert user.build(update=False) == res
 
         user2 = KickassAPI.UserUrl("reduxionist", 1, (KickassAPI.ORDER.SIZE,
                                                       KickassAPI.ORDER.DESC))
-        res2 = ("http://www.kickass.to/user/reduxionist/uploads/"
+        res2 = (BASE_URL + "/user/reduxionist/uploads/"
                "?page=1&field=size&sorder=desc")
         assert user2.build(update=False) == res2
 

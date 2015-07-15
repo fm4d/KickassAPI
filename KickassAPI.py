@@ -5,7 +5,7 @@
 # Author: FEE1DE4D
 
 """
-This is an unofficial python API for kickass.to partially
+This is an unofficial python API for kat.cr (formerly kickass.to) partially
 inspired by https://github.com/karan/TPB
 
 by FEE1DE4D (fee1de4d@gmail.com)
@@ -231,7 +231,7 @@ class Results(object):
         category = td("span").find("strong").find("a").eq(0).text()
         verified_torrent = True if td("a.iverify.icon16") else False
         comments = td("a.icomment.icommentjs.icon16").text()
-        torrent_link = "http://www.kickass.to"
+        torrent_link = "http://" + BASE.domain
         if td("a.cellMainLink").attr("href") is not None:
             torrent_link += td("a.cellMainLink").attr("href")
         magnet_link = td("a.imagnet.icon16").attr("href")
@@ -338,7 +338,7 @@ class Results(object):
 
 class Latest(Results):
     """
-    Results subclass that represents http://kickass.to/new/
+    Results subclass that represents http://kat.cr/new/
     """
     def __init__(self, page=1, order=None):
         self.url = LatestUrl(page, order)
@@ -346,7 +346,7 @@ class Latest(Results):
 
 class User(Results):
     """
-    Results subclass that represents http://kickass.to/user/
+    Results subclass that represents http://kat.cr/user/
     """
     def __init__(self, user, page=1, order=None):
         self.url = UserUrl(user, page, order)
@@ -354,7 +354,7 @@ class User(Results):
 
 class Search(Results):
     """
-    Results subclass that represents http://kickass.to/usearch/
+    Results subclass that represents http://kat.cr/usearch/
     """
     def __init__(self, query, page=1, category=None, order=None):
         self.url = SearchUrl(query, page, category, order)
