@@ -1,6 +1,6 @@
 KickassAPI
 ==========
-This is an unofficial python API for kickass.to partially inspired by https://github.com/karan/TPB
+This is an unofficial python API for kat.cr (formerly kickass.to) partially inspired by https://github.com/karan/TPB
 
 Installation
 -----------
@@ -12,7 +12,7 @@ pip install KickassAPI
 Usage
 -----
 
-```Search``` represents ```http://kickass.to/usearch/```, ```Latest``` ```http://kickass.to/new/```, and ```User``` ```http://kickass.to/user/username/uploads/```
+```Search``` represents ```http://kat.cr/usearch/```, ```Latest``` ```http://kat.cr/new/```, and ```User``` ```http://kat.cr/user/username/uploads/```
 
 ```python
 from KickassAPI import Search, Latest, User, CATEGORY, ORDER

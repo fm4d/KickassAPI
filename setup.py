@@ -11,11 +11,11 @@ setup(
     author_email='m@fm4d.net',
 
     url=URL,
-    description='Python API for kickass.to',
+    description='Python API for kat.cr (formerly kickass.to)',
     license='GPLv2+',
 
     long_description="Documentation can be found here " + URL,
-    
+
      install_requires=[
         'setuptools',
         'pyquery',
