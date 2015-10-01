@@ -227,15 +227,15 @@ class Results(object):
         name = td("a.cellMainLink").text()
         name = name.replace(" . ", ".").replace(" .", ".")
         author = td("a.plain").text()
-        verified_author = True if td("img") else False
+        verified_author = True if td(".lightgrey>.ka-verify") else False
         category = td("span").find("strong").find("a").eq(0).text()
-        verified_torrent = True if td("a.iverify.icon16") else False
-        comments = td("a.icomment.icommentjs.icon16").text()
+        verified_torrent = True if td(".icon16>.ka-green") else False
+        comments = td(".iaconbox>.icommentjs>.iconvalue").text()
         torrent_link = "http://" + BASE.domain
         if td("a.cellMainLink").attr("href") is not None:
             torrent_link += td("a.cellMainLink").attr("href")
-        magnet_link = td("a.imagnet.icon16").attr("href")
-        download_link = td("a.idownload.icon16").eq(1).attr("href")
+        magnet_link = td("a[data-nop]").eq(1).attr("href")
+        download_link = td("a[data-download]").attr("href")
 
         td_centers = row("td.center")
         size = td_centers.eq(0).text()
