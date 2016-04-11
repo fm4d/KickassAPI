@@ -1,13 +1,13 @@
 KickassAPI
 ==========
-This is an unofficial python API for kat.cr (formerly kickass.to) partially inspired by https://github.com/karan/TPB
+This is an unofficial python API for kat.cr (formerly kickass.to) partially inspired by https://github.com/karan/TPB.
+Note: I am no longer maintaining this project, use with care.
+
 
 Installation
 -----------
 
-```
-pip install KickassAPI
-```
+~~pip install KickassAPI~~
 
 Usage
 -----
